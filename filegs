@@ -1,0 +1,169 @@
+function activateScheduler() {
+  ScriptApp.newTrigger("hitAPIberangkat")
+    .timeBased()
+    .everyDays(1)
+    .atHour(7)
+    .nearMinute(40) 
+    .create();
+  Logger.log("Pulang Scheduler is activated.");
+  return true;
+}
+
+function deactivateScheduler() {
+  var allTriggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < allTriggers.length; i++) {
+    var trigger = allTriggers[i];
+    if (trigger.getHandlerFunction() === "hitAPIberangkat") {
+      ScriptApp.deleteTrigger(trigger);
+      Logger.log("Scheduler is deactivated.");
+      return; 
+    }
+  }
+  Logger.log("Scheduler trigger not found.");
+}
+
+function activatePulangScheduler() {
+  ScriptApp.newTrigger("hitAPIpulang")
+    .timeBased()
+    .everyDays(1) 
+    .atHour(17) 
+    .nearMinute(10)
+    .create();
+  Logger.log("Pulang Scheduler is activated.");
+  return true;
+}
+
+function deactivatePulangScheduler() {
+  var allTriggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < allTriggers.length; i++) {
+    var trigger = allTriggers[i];
+    if (trigger.getHandlerFunction() === "hitAPIpulang") {
+      ScriptApp.deleteTrigger(trigger);
+      Logger.log("Pulang Scheduler is deactivated.");
+      return false;
+    }
+  }
+  Logger.log("Pulang Scheduler trigger not found.");
+  return false;
+}
+
+function isBerangkatSchedulerActive() {
+    var allTriggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < allTriggers.length; i++) {
+    var trigger = allTriggers[i];
+    if (trigger.getHandlerFunction() === "hitAPIberangkat") {
+      return true; 
+    }
+  }
+  return false; 
+}
+
+function isPulangSchedulerActive() {
+  var allTriggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < allTriggers.length; i++) {
+    var trigger = allTriggers[i];
+    if (trigger.getHandlerFunction() === "hitAPIpulang") {
+      return true; 
+    }
+  }
+  return false; 
+}
+
+function doGet(e) {
+  var html = HtmlService.createHtmlOutputFromFile('Page')
+      .setTitle('Scheduller Absen')
+      .setWidth(300)
+      .setHeight(150);
+  return html;
+}
+
+function hitAPIberangkat() {
+  var apiUrl = "https://mware.co.id/api/absensi_bawahan_recognition_json";
+  
+  var currentDate = new Date();
+  
+  var dayOfWeek = currentDate.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    Logger.log("Error: Tidak dapat mengirim permintaan pada hari Sabtu atau Minggu.");
+    return;
+  }
+  
+  // Generate random minutes between 0 and 50
+  var randomMinutes = Math.floor(Math.random() * 51);
+  
+  // Set the time to a random time between 07:00 and 07:50
+  currentDate.setHours(7, randomMinutes, 0, 0);
+  
+  var formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "dd-MM-yyyy HH:mm:ss");
+  
+  var payload = {
+    "reqToken": "gantien",
+    "reqJam": formattedDate,
+    "reqLongitude": "112.733577",
+    "reqLatitude": "-7.1988501",
+    "reqLokasiKerjaId": "gantien",
+    "reqConfidenceJson": JSON.stringify([{"FACE":0},{"SMILE":0},{"BLINK":0}]),
+    "reqAlat": "FINGER",
+    "reqBawahan": "gantien"
+  };
+  
+  var options = {
+    "method": "post",
+    "payload": payload,
+    "muteHttpExceptions": true
+  };
+  
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  
+  var statusCode = response.getResponseCode();
+  var responseData = response.getContentText();
+  
+  Logger.log("Status Code : " + statusCode);
+  Logger.log("Absen Jam :" + formattedDate);
+  Logger.log("Response Data : " + responseData);
+}
+
+
+function hitAPIpulang() {
+  var apiUrl = "https://mware.co.id/api/absensi_bawahan_recognition_json";
+  
+  var currentDate = new Date();
+  
+  var dayOfWeek = currentDate.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    Logger.log("Error: Tidak dapat mengirim permintaan pada hari Sabtu atau Minggu.");
+    return;
+  }
+  
+  var randomMinutes = Math.floor(Math.random() * 51);
+  
+  currentDate.setHours(15, randomMinutes, 0, 0);
+  
+  var formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "dd-MM-yyyy HH:mm:ss");
+  
+  var payload = {
+    "reqToken": "gantien",
+    "reqJam": formattedDate,
+    "reqLongitude": "112.733577",
+    "reqLatitude": "-7.1988501",
+    "reqLokasiKerjaId": "gantien",
+    "reqConfidenceJson": JSON.stringify([{"FACE":0},{"SMILE":0},{"BLINK":0}]),
+    "reqAlat": "FINGER",
+    "reqBawahan": "gantien"
+  };
+  
+  var options = {
+    "method": "post",
+    "payload": payload,
+    "muteHttpExceptions": true
+  };
+  
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  
+  var statusCode = response.getResponseCode();
+  var responseData = response.getContentText();
+  
+  Logger.log("Status Code : " + statusCode);
+  Logger.log("Absen Jam :" + formattedDate);
+  Logger.log("Response Data : " + responseData);
+}
